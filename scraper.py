@@ -4,7 +4,7 @@ import logging
 import os
 
 API_URL = "https://www.idealo.fr/csr/api/v2/modules/dealsResult"
-TOTAL_PAGES = 67
+TOTAL_PAGES = 1
 MAX_RETRIES = 3
 CONCURRENT_REQUESTS = 30
 OUTPUT_FILE = "links.txt"
