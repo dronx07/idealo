@@ -1,4 +1,4 @@
-name: Idealo Product URL Refresh
+name: Daily Idealo Scraper (08:00 UTC)
 
 on:
   schedule:
@@ -9,18 +9,17 @@ permissions:
   contents: write
 
 jobs:
-  run-scraper:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -30,18 +29,24 @@ jobs:
       - name: Run scraper
         env:
           PROXY: ${{ secrets.PROXY }}
-        run: python scraper.py
+        run: |
+          python scraper.py
 
-      - name: Commit and push links.txt
+      - name: Show output
+        run: |
+          cat links.txt
+
+      - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add links.txt
+      - name: Pull latest changes
+        run: |
+          git pull --rebase origin main || true
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Daily update links.txt"
-            git push
-          fi
+      - name: Commit and push if changed
+        run: |
+          git add links.txt
+          git diff --cached --quiet || git commit -m "Daily update links.txt"
+          git push origin main
