@@ -5,7 +5,7 @@ import os
 
 API_URL = "https://www.idealo.fr/csr/api/v2/modules/dealsResult"
 TOTAL_PAGES = 67
-MAX_RETRIES = 3
+MAX_RETRIES = 1
 CONCURRENT_REQUESTS = 30
 OUTPUT_FILE = "links.txt"
 
@@ -70,7 +70,7 @@ async def resolve_url(client, product_id):
 
 
 async def main():
-    timeout = httpx.Timeout(30.0)
+    timeout = httpx.Timeout(10.0)
 
     async with httpx.AsyncClient(
         headers=HEADERS,
