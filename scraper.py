@@ -3,11 +3,14 @@ import httpx
 import logging
 import os
 import random
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_URL = "https://www.idealo.fr/csr/api/v2/modules/dealsResult"
 TOTAL_PAGES = 67
 MAX_RETRIES = 3
-CONCURRENT_REQUESTS = 5
+CONCURRENT_REQUESTS = 20
 OUTPUT_FILE = "links.txt"
 
 PROXY = os.getenv("PROXY")
