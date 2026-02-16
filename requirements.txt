@@ -1,2 +1,2 @@
-httpx
+curl-cffi
 python-dotenv
