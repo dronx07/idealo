@@ -1,15 +1,12 @@
 import asyncio
 import httpx
 import logging
-import os
 
 API_URL = "https://www.idealo.fr/csr/api/v2/modules/dealsResult"
 TOTAL_PAGES = 67
 MAX_RETRIES = 1
 CONCURRENT_REQUESTS = 30
 OUTPUT_FILE = "links.txt"
-
-PROXY = os.getenv("PROXY")
 
 HEADERS = {
     "Accept": "*/*",
@@ -74,7 +71,6 @@ async def main():
 
     async with httpx.AsyncClient(
         headers=HEADERS,
-        proxy=PROXY,
         timeout=timeout,
         http2=False,
     ) as client:
