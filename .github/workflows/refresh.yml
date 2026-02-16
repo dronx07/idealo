@@ -1,4 +1,4 @@
-name: Daily Idealo Scraper (08:00 UTC)
+name: Daily Idealo Scraper
 
 on:
   schedule:
@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: idealo-daily-scraper
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -29,20 +35,24 @@ jobs:
       - name: Run scraper
         env:
           PROXY: ${{ secrets.PROXY }}
-        run: |
-          python scraper.py
+        run: python scraper.py
 
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Pull latest changes
-        run: |
-          git pull --rebase origin main || true
-
       - name: Commit and push if changed
         run: |
           git add links.txt
-          git diff --cached --quiet || git commit -m "Update links.txt"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Daily update links.txt"
+
+          # Rebase in case remote changed during workflow run
+          git pull --rebase origin main
+
           git push origin main
