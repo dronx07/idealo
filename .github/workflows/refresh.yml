@@ -32,10 +32,6 @@ jobs:
         run: |
           python scraper.py
 
-      - name: Show output
-        run: |
-          cat links.txt
-
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
@@ -48,5 +44,5 @@ jobs:
       - name: Commit and push if changed
         run: |
           git add links.txt
-          git diff --cached --quiet || git commit -m "Daily update links.txt"
+          git diff --cached --quiet || git commit -m "Update links.txt"
           git push origin main
