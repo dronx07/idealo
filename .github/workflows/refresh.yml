@@ -1,4 +1,4 @@
-name: Daily Idealo Scraper
+name: Daily Idealo Scraper (08:00 UTC)
 
 on:
   schedule:
@@ -45,6 +45,7 @@ jobs:
       - name: Commit and push if changed
         run: |
           git add links.txt
+
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
@@ -52,7 +53,5 @@ jobs:
 
           git commit -m "Daily update links.txt"
 
-          # Rebase in case remote changed during workflow run
-          git pull --rebase origin main
-
-          git push origin main
+          # Safe for automation branches
+          git push --force-with-lease origin main
