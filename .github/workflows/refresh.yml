@@ -1,4 +1,4 @@
-name: Daily Idealo Scraper (09:00 UTC)
+name: Daily Idealo Scraper
 
 on:
   schedule:
