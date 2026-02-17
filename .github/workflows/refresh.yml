@@ -1,8 +1,8 @@
-name: Daily Idealo Scraper (08:00 UTC)
+name: Daily Idealo Scraper (09:00 UTC)
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "0 9 * * *" 
   workflow_dispatch:
 
 permissions:
@@ -53,5 +53,5 @@ jobs:
 
           git commit -m "Daily update links.txt"
 
-          # Safe for automation branches
-          git push --force-with-lease origin main
+          # Normal push (safer than force-with-lease)
+          git push origin main
