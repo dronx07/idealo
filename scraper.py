@@ -1,3 +1,4 @@
+
 import asyncio
 import logging
 import os
@@ -61,32 +62,6 @@ async def fetch_ids(session, page_index):
         return []
 
 
-async def resolve_url(session, product_id):
-    url = f"https://www.idealo.fr/prix/{product_id}.html"
-
-    async with semaphore:
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                await asyncio.sleep(random.uniform(0.3, 1.0))
-
-                r = await session.get(
-                    url,
-                    allow_redirects=True,
-                    timeout=15,
-                )
-
-                logger.info(f"Resolve {product_id} → {r.status_code}")
-                r.raise_for_status()
-
-                return str(r.url)
-
-            except Exception as e:
-                logger.warning(f"Resolve {product_id} attempt {attempt} failed: {e}")
-                await asyncio.sleep(2 ** attempt)
-
-        return None
-
-
 async def main():
     async with AsyncSession(
         headers=HEADERS,
@@ -97,10 +72,8 @@ async def main():
 
         logger.info("Fetching product IDs...")
 
-  
         id_tasks = [fetch_ids(session, i) for i in range(0, TOTAL_PAGES)]
         id_results = await asyncio.gather(*id_tasks)
-
 
         product_ids = [pid for ids in id_results for pid in ids]
         logger.info(f"Collected {len(product_ids)} product IDs")
@@ -109,16 +82,10 @@ async def main():
             logger.error("No product IDs collected — likely blocked. Aborting.")
             return
 
-        logger.info("Resolving product URLs...")
-
-        resolve_tasks = [resolve_url(session, pid) for pid in product_ids]
-        resolved_urls = await asyncio.gather(*resolve_tasks)
-
-        final_urls = [url for url in resolved_urls if url]
-
+        final_urls = [f"https://www.idealo.fr/prix/{pid}.html" for pid in product_ids]
         final_urls = list(dict.fromkeys(final_urls))
 
-        logger.info(f"Resolved {len(final_urls)} unique URLs")
+        logger.info(f"Collected {len(final_urls)} unique URLs")
 
         if not final_urls:
             logger.error("No URLs resolved — skipping file write.")
