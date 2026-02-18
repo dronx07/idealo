@@ -97,9 +97,11 @@ async def main():
 
         logger.info("Fetching product IDs...")
 
+        # Ensure ID tasks are gathered in the correct order
         id_tasks = [fetch_ids(session, i) for i in range(1, TOTAL_PAGES + 1)]
         id_results = await asyncio.gather(*id_tasks)
 
+        # Flatten the list of product IDs and keep the order intact
         product_ids = [pid for ids in id_results for pid in ids]
         logger.info(f"Collected {len(product_ids)} product IDs")
 
@@ -109,10 +111,16 @@ async def main():
 
         logger.info("Resolving product URLs...")
 
+        # Create a list of tasks to resolve URLs in the same order as product_ids
         resolve_tasks = [resolve_url(session, pid) for pid in product_ids]
         resolved_urls = await asyncio.gather(*resolve_tasks)
 
-        final_urls = list(dict.fromkeys(url for url in resolved_urls if url))
+        # Ensure we preserve the order of product IDs in the resolved URLs list
+        final_urls = [url for url in resolved_urls if url]
+
+        # Remove duplicates while maintaining order
+        final_urls = list(dict.fromkeys(final_urls))
+
         logger.info(f"Resolved {len(final_urls)} unique URLs")
 
         if not final_urls:
@@ -123,6 +131,7 @@ async def main():
             f.write("\n".join(final_urls))
 
         logger.info("links.txt written successfully.")
+
 
 
 if __name__ == "__main__":
