@@ -72,7 +72,7 @@ async def main():
 
         logger.info("Fetching product IDs...")
 
-        id_tasks = [fetch_ids(session, i) for i in range(1, TOTAL_PAGES + 1)]
+        id_tasks = [fetch_ids(session, i) for i in range(0, TOTAL_PAGES)]
         id_results = await asyncio.gather(*id_tasks)
 
         product_ids = [pid for ids in id_results for pid in ids]
