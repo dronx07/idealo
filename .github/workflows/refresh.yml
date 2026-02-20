@@ -2,7 +2,7 @@ name: Daily Idealo Scraper
 
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "27 5 * * *"
   workflow_dispatch:
 
 permissions:
