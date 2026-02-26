@@ -53,5 +53,8 @@ jobs:
 
           git commit -m "Daily update links.txt"
 
-          # Normal push (safer than force-with-lease)
+          # Pull latest changes and rebase
+          git pull --rebase origin main
+
+          # Push updated history
           git push origin main
