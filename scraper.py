@@ -31,6 +31,7 @@ semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS)
 
 async def fetch_ids(session, page_index):
     async with semaphore:
+        logger.info(f"Fetching page {page_index}")
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 await asyncio.sleep(random.uniform(0.3, 1.0))
@@ -44,29 +45,42 @@ async def fetch_ids(session, page_index):
                     },
                     timeout=15,
                 )
+                logger.info(f"Page {page_index} status {r.status_code}")
                 r.raise_for_status()
                 data = r.json()
                 items = data.get("items", [])
-                return [item["id"] for item in items if "id" in item]
-            except Exception:
+                ids = [item["id"] for item in items if "id" in item]
+                logger.info(f"Page {page_index} collected {len(ids)} ids")
+                return ids
+            except Exception as e:
+                logger.warning(f"Page {page_index} attempt {attempt} failed: {e}")
                 await asyncio.sleep(2 ** attempt)
+        logger.error(f"Page {page_index} failed after {MAX_RETRIES} attempts")
         return []
 
 
 async def resolve_url(session, url):
     async with semaphore:
+        logger.info(f"Resolving {url}")
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 await asyncio.sleep(random.uniform(0.3, 1.0))
                 r = await session.get(url, timeout=15, allow_redirects=True)
+                logger.info(f"{url} status {r.status_code}")
                 r.raise_for_status()
-                return str(r.url)
-            except Exception:
+                final_url = str(r.url)
+                logger.info(f"Resolved {url} → {final_url}")
+                return final_url
+            except Exception as e:
+                logger.warning(f"{url} attempt {attempt} failed: {e}")
                 await asyncio.sleep(2 ** attempt)
+        logger.error(f"{url} failed after {MAX_RETRIES} attempts")
         return None
 
 
 async def main():
+    logger.info("Starting scraper")
+
     async with AsyncSession(
         headers=HEADERS,
         proxies={"http": PROXY, "https": PROXY} if PROXY else None,
@@ -74,16 +88,22 @@ async def main():
         http_version="v2"
     ) as session:
 
+        logger.info("Fetching product IDs")
         id_tasks = [fetch_ids(session, i) for i in range(TOTAL_PAGES)]
         id_results = await asyncio.gather(*id_tasks)
+
         product_ids = [pid for ids in id_results for pid in ids]
+        logger.info(f"Collected total {len(product_ids)} product IDs")
 
         if not product_ids:
+            logger.error("No product IDs collected, aborting")
             return
 
         base_urls = list(dict.fromkeys(
             f"https://www.idealo.fr/prix/{pid}.html" for pid in product_ids
         ))
+
+        logger.info(f"Resolving {len(base_urls)} URLs")
 
         resolve_tasks = [resolve_url(session, url) for url in base_urls]
         resolved_results = await asyncio.gather(*resolve_tasks)
@@ -92,11 +112,16 @@ async def main():
             url for url in resolved_results if url
         ))
 
+        logger.info(f"Collected {len(final_urls)} unique resolved URLs")
+
         if not final_urls:
+            logger.error("No resolved URLs collected, aborting file write")
             return
 
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
             f.write("\n".join(final_urls))
+
+        logger.info(f"{OUTPUT_FILE} written successfully")
 
 
 if __name__ == "__main__":
