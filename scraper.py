@@ -29,6 +29,19 @@ logger = logging.getLogger(__name__)
 semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS)
 
 
+async def resolve_hash(session, token):
+    try:
+        r = await session.post(
+            "https://www.idealo.fr/ipc/prg",
+            data={"value": token},
+            allow_redirects=True,
+            timeout=15,
+        )
+        return str(r.url)
+    except Exception:
+        return None
+
+
 async def fetch_urls(session, page_index):
     async with semaphore:
         logger.info(f"Fetching page {page_index}")
@@ -54,11 +67,22 @@ async def fetch_urls(session, page_index):
                 data = r.json()
                 items = data.get("items", [])
 
-                urls = [
-                    item["href"]
-                    for item in items
-                    if "href" in item
-                ]
+                urls = []
+                hashes = []
+
+                for item in items:
+                    href = item.get("href")
+                    if not href:
+                        continue
+                    if href.startswith("http"):
+                        urls.append(href)
+                    else:
+                        hashes.append(href)
+
+                if hashes:
+                    tasks = [resolve_hash(session, h) for h in hashes]
+                    resolved = await asyncio.gather(*tasks)
+                    urls.extend([u for u in resolved if u])
 
                 logger.info(f"Page {page_index} collected {len(urls)} urls")
                 return urls
@@ -81,19 +105,16 @@ async def main():
         http_version="v2"
     ) as session:
 
-        logger.info("Fetching product URLs")
-
         tasks = [fetch_urls(session, i) for i in range(TOTAL_PAGES)]
         results = await asyncio.gather(*tasks)
 
         urls = [url for result in results for url in result]
-
         final_urls = list(dict.fromkeys(urls))
 
         logger.info(f"Collected {len(final_urls)} unique URLs")
 
         if not final_urls:
-            logger.error("No URLs collected, aborting file write")
+            logger.error("No URLs collected")
             return
 
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
