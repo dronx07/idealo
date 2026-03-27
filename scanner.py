@@ -49,7 +49,7 @@ async def process_product(product, semaphore, amazon_cookie, seller_cookie, db, 
             ean = product["product_gtin"]
             supplier_price = float(product["supplier_price"])
             supplier_cost = supplier_price * 1.20
-            supplier_link = product["product_link"]
+            supplier_link = product["product_url"]
 
             asin = await convert(ean, amazon_cookie)
             logger.info(f"{ean, asin}")
