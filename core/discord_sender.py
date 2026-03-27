@@ -39,7 +39,7 @@ class DiscordSender:
                 {"name": "Est. Monthly Sales", "value": f"{deal['estimated_sales']}", "inline": False},
                 {
                     "name": "Links",
-                    "value": f"[Amazon]({deal['amazon_link']}) | [Qogita]({deal['supplier_link']}) | [SAS]({deal['sas_link']})",
+                    "value": f"[Amazon]({deal['amazon_link']}) | [Idealo]({deal['supplier_link']}) | [SAS]({deal['sas_link']})",
                     "inline": False,
                 },
             ],
